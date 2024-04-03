@@ -7,10 +7,12 @@ import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
 import searchRoutes from './routes/searchRoutes';
 import subscriptionRouters from './routes/subscriptionRoutes';
+import Cors from 'cors';
 
 // Create an Express application
 const app = express();
-const PORT = 4200;
+const PORT = 5000;
+app.use(Cors());
 
 // Middleware to parse JSON request bodies
 app.use(bodyParser.json());
@@ -33,7 +35,7 @@ mongoose.connect("mongodb://localhost:27017/book_ai")
   .catch(error => console.error("MongoDB connection error:", error));
 
 // Start the server
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
