@@ -16,6 +16,7 @@ exports.login = exports.signup = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const User_1 = __importDefault(require("../models/User"));
+const Subscription_1 = __importDefault(require("../models/Subscription"));
 const JWT_SECRET = 'your_jwt_secret';
 const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -52,9 +53,23 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (!passwordMatch) {
             return res.status(401).json({ message: 'Invalid password' });
         }
-        // Create and return JWT token
+        // Create JWT token
         const token = jsonwebtoken_1.default.sign({ userId: user.id }, JWT_SECRET);
-        res.status(200).json({ token, message: 'login successful' });
+        // Check the user's subscription status
+        const subscription = yield Subscription_1.default.findOne({ userId: user.id });
+        // Prepare response data
+        const responseData = { token, message: 'login successful' };
+        if (subscription) {
+            // User has an active subscription
+            responseData.subscriptionStatus = 'active';
+            responseData.subscriptionPlan = subscription.plan;
+            responseData.subscriptionEndDate = subscription.endDate;
+        }
+        else {
+            // User does not have an active subscription
+            responseData.subscriptionStatus = 'inactive';
+        }
+        res.status(200).json(responseData);
     }
     catch (error) {
         console.error(error);

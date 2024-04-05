@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User, { UserDocument } from '../models/User';
+import SubscriptionModel, { Subscription } from '../models/Subscription';
 
 const JWT_SECRET = 'your_jwt_secret';
 
@@ -48,9 +49,26 @@ export const login = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'Invalid password' });
         }
 
-        // Create and return JWT token
+        // Create JWT token
         const token = jwt.sign({ userId: user.id }, JWT_SECRET);
-        res.status(200).json({ token, message: 'login successful' });
+
+        // Check the user's subscription status
+        const subscription = await SubscriptionModel.findOne({ userId: user.id });
+
+        // Prepare response data
+        const responseData: { [key: string]: any } = { token, message: 'login successful' };
+
+        if (subscription) {
+            // User has an active subscription
+            responseData.subscriptionStatus = 'active';
+            responseData.subscriptionPlan = subscription.plan;
+            responseData.subscriptionEndDate = subscription.endDate;
+        } else {
+            // User does not have an active subscription
+            responseData.subscriptionStatus = 'inactive';
+        }
+
+        res.status(200).json(responseData);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
